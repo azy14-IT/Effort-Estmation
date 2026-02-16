@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>User Management - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/tasks" class="nav-link">Tasks</a>
+                <a href="/users" class="nav-link active" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span>Admin User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>User Management</h2>
+                <div class="actions">
+                    <button onclick="document.getElementById('newUserModal').classList.toggle('hidden')" class="btn">
+                        + Add New User
+                    </button>
+                    <button onclick="exportToExcel()" class="btn btn-green" style="background-color: #10b981;">Export
+                        Excel</button>
+                    <button onclick="exportToPDF()" class="btn btn-red" style="background-color: #ef4444;">Export
+                        PDF</button>
+                </div>
+            </div>
+
+            <!-- New User Form -->
+            <div id="newUserModal" class="card mb-4 hidden">
+                <h3>Register Employee</h3>
+                <form action="/users/create" method="post">
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" name="firstName" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="lastName" required />
+                        </div>
+                    </div>
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Budget (₹ / hr)</label>
+                            <input type="number" step="0.01" name="hourlyRate" placeholder="e.g. 500" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" required />
+                    </div>
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select name="roleId" required>
+                                <option th:each="role : ${roles}" th:value="${role.id}" th:text="${role.name}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <select name="departmentId" required>
+                                <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">Create User</button>
+                </form>
+            </div>
+
+            <!-- Users List -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${users}">
+                                <td style="font-weight: 500;">
+                                    <span th:text="${u.firstName} + ' ' + ${u.lastName}">John Doe</span>
+                                </td>
+                                <td th:text="${u.email}" style="color: #64748b;">john@example.com</td>
+                                <td>
+                                    <span class="badge badge-blue" th:text="${u.role != null ? u.role.name : '-'}">
+                                        Admin
+                                    </span>
+                                </td>
+                                <td th:text="${u.department != null ? u.department.name : '-'}">HR</td>
+                                <td>
+                                    <span class="badge badge-green" th:if="${u.isActive}">Active</span>
+                                    <span class="badge badge-gray" th:unless="${u.isActive}">Inactive</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{'/users/edit/' + ${u.id}}" class="btn-sm btn-secondary">Edit</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function getUsersData() {
+            const table = document.querySelector('table');
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    data.push({
+                        Name: cells[0].innerText,
+                        Email: cells[1].innerText,
+                        Role: cells[2].innerText,
+                        Department: cells[3].innerText,
+                        Status: cells[4].innerText
+                    });
+                }
+            });
+            return data;
+        }
+
+        function exportToExcel() {
+            const data = getUsersData();
+            if (data.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Users");
+            XLSX.writeFile(wb, 'User_List.xlsx');
+        }
+
+        function exportToPDF() {
+            const data = getUsersData();
+            if (data.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("User Usage Report", 14, 20);
+
+            const tableColumn = ["Name", "Email", "Role", "Department", "Status"];
+            const tableRows = data.map(item => [
+                item.Name,
+                item.Email,
+                item.Role,
+                item.Department,
+                item.Status
+            ]);
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+            });
+
+            doc.save('User_List.pdf');
+        }
+    </script>
+</body>
+
+</html>

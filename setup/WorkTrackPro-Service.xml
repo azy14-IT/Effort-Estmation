@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+      Configuration for WinSW (Windows Service Wrapper)
+      This file must be named the same as the executable (e.g. WorkTrackPro-Service.xml if exe is WorkTrackPro-Service.exe)
+    -->
+    <id>WorkTrackPro</id>
+    <name>WorkTrack Pro</name>
+    <description>Employee Tracking Application System (Auto-Running Service)</description>
+    
+    <!-- Path to Java runtime (ensure it's in PATH or provide full path) -->
+    <executable>java</executable>
+    
+    <!-- Arguments for Spring Boot Application -->
+    <arguments>-jar "%BASE%\employee-tracking.jar"</arguments>
+    
+    <!-- Logging configuration -->
+    <log mode="roll-by-size">
+        <sizeThreshold>10240</sizeThreshold>
+        <keepFiles>8</keepFiles>
+    </log>
+    
+    <!-- Automatic startup -->
+    <startmode>Automatic</startmode>
+    
+    <!-- Environment variables if needed -->
+    <!-- <env name="JAVA_HOME" value="C:\Program Files\Java\jdk-17" /> -->
+    
+</configuration>

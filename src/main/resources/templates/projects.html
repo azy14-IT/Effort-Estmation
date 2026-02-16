@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Projects - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link active">Projects</a>
+                <a href="/tasks" class="nav-link">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span>Admin User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Project Management</h2>
+                <button onclick="document.getElementById('newProjectModal').classList.toggle('hidden')" class="btn"
+                    th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager'}">
+                    + New Project
+                </button>
+            </div>
+
+            <!-- New Project Form (Simple toggle) -->
+            <div id="newProjectModal" class="card mb-4 hidden">
+                <h3>Create New Project</h3>
+                <form action="/projects/create" method="post">
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Project Name</label>
+                            <input type="text" name="name" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Budget (₹)</label>
+                            <input type="number" name="budget" required />
+                        </div>
+                    </div>
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" name="startDate" required />
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" name="endDate" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">Create Project</button>
+                </form>
+            </div>
+
+            <!-- Projects List -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Status</th>
+                                <th>Timeline</th>
+                                <th>Budget</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="project : ${projects}">
+                                <td th:text="${project.name}" style="font-weight: 600;">Project Name</td>
+                                <td>
+                                    <span class="badge badge-blue" th:text="${project.status}">ACTIVE</span>
+                                </td>
+                                <td>
+                                    <span th:text="${project.startDate}">Jan 1</span> -
+                                    <span th:text="${project.endDate}">Dec 31</span>
+                                </td>
+                                <td th:text="'₹' + ${project.budget}">₹0</td>
+                                <td>
+                                    <a th:href="@{'/projects/edit/' + ${project.id}}" class="btn-sm btn-secondary"
+                                        style="text-decoration:none;"
+                                        th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager'}">Edit</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(projects)}">
+                                <td colspan="5" style="text-align:center; color: #94a3b8;">No projects found. Create one
+                                    above.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

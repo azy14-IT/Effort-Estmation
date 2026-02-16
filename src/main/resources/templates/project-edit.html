@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Edit Project - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link active">Projects</a>
+                <a href="/tasks" class="nav-link">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span>Admin User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Edit Project</h2>
+            </div>
+
+            <div class="card" style="max-width: 800px;">
+                <form action="/projects/update" method="post">
+                    <input type="hidden" name="id" th:value="${project.id}" />
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Project Name</label>
+                            <input type="text" name="name" th:value="${project.name}" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Budget (₹)</label>
+                            <input type="number" name="budget" th:value="${project.budget}" required />
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" name="startDate" th:value="${project.startDate}" required />
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" name="endDate" th:value="${project.endDate}" required />
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Manager</label>
+                            <select name="managerId">
+                                <option th:each="u : ${users}" th:value="${u.id}"
+                                    th:text="${u.firstName} + ' ' + ${u.lastName}"
+                                    th:selected="${u.id == project.managerId}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="PLANNED" th:selected="${project.status.name() == 'PLANNED'}">Planned
+                                </option>
+                                <option value="ACTIVE" th:selected="${project.status.name() == 'ACTIVE'}">Active
+                                </option>
+                                <option value="ON_HOLD" th:selected="${project.status.name() == 'ON_HOLD'}">On Hold
+                                </option>
+                                <option value="COMPLETED" th:selected="${project.status.name() == 'COMPLETED'}">
+                                    Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" th:text="${project.description}"></textarea>
+                    </div>
+
+                    <div class="flex" style="gap: 1rem;">
+                        <button type="submit" class="btn">Update Project</button>
+                        <a href="/projects" class="btn btn-secondary"
+                            style="text-align:center; display:inline-block; text-decoration:none;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

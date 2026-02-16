@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Tasks - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/tasks" class="nav-link active">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span>Admin User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Task Board</h2>
+                <button onclick="document.getElementById('newTaskModal').classList.toggle('hidden')" class="btn"
+                    th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager' or session.user.role.name == 'Team Lead'}">
+                    + New Task
+                </button>
+            </div>
+
+            <div id="newTaskModal" class="card mb-4 hidden">
+                <h3>Create New Task</h3>
+                <form action="/tasks/create" method="post">
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="title" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Project</label>
+                            <select name="projectId" required>
+                                <option th:each="project : ${projects}" th:value="${project.id}"
+                                    th:text="${project.name}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-cols-3">
+                        <div class="form-group">
+                            <label>Est. Hours</label>
+                            <input type="number" name="estimatedHours" step="0.5" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Assign To</label>
+                            <select name="assignedToId">
+                                <option value="">-- Unassigned --</option>
+                                <option th:each="u : ${users}" th:value="${u.id}"
+                                    th:text="${u.firstName} + ' ' + ${u.lastName}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select name="priority">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">Create Task</button>
+                    <button type="button" onclick="document.getElementById('newTaskModal').classList.toggle('hidden')"
+                        class="btn btn-secondary">Cancel</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Project</th>
+                                <th>Assigned To</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Est. Hours</th>
+                                <th>Due Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="task : ${tasks}">
+                                <td th:text="${task.title}" style="font-weight: 500;">Task Name</td>
+                                <td th:text="${task.project.name}" style="color: #64748b; font-size: 0.85rem;">Project A
+                                </td>
+                                <td>
+                                    <div th:if="${task.assignedTo}">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div
+                                                style="width: 24px; height: 24px; background: #3b82f6; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">
+                                                <span
+                                                    th:text="${#strings.substring(task.assignedTo.firstName,0,1)}">A</span>
+                                            </div>
+                                            <span
+                                                th:text="${task.assignedTo.firstName} + ' ' + ${task.assignedTo.lastName}">User</span>
+                                        </div>
+                                    </div>
+                                    <span th:unless="${task.assignedTo}"
+                                        style="color: #94a3b8; font-style: italic;">Unassigned</span>
+                                </td>
+                                <td><span class="badge badge-gray" th:text="${task.status}">TODO</span></td>
+                                <td>
+                                    <span th:text="${task.priority}"
+                                        th:style="${task.priority.name() == 'CRITICAL' ? 'color: red; font-weight: bold;' : ''}">
+                                        MEDIUM
+                                    </span>
+                                </td>
+                                <td th:text="${task.estimatedHours} + 'h'">0h</td>
+                                <td th:text="${#temporals.format(task.dueDate, 'MMM dd, yyyy')}">Date</td>
+                                <td>
+                                    <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn-sm btn-secondary"
+                                        style="text-decoration:none;"
+                                        th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager' or session.user.role.name == 'Team Lead'}">Edit</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

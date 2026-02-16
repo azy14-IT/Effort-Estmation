@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Edit Task - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/tasks" class="nav-link active">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span>Admin User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Edit Task</h2>
+            </div>
+
+            <div class="card" style="max-width: 800px;">
+                <form action="/tasks/update" method="post">
+                    <input type="hidden" name="id" th:value="${task.id}" />
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="title" th:value="${task.title}" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Project</label>
+                            <select name="projectId" required>
+                                <option th:each="project : ${projects}" th:value="${project.id}"
+                                    th:text="${project.name}" th:selected="${project.id == task.project.id}"></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-3">
+                        <div class="form-group">
+                            <label>Est. Hours</label>
+                            <input type="number" name="estimatedHours" step="0.5" th:value="${task.estimatedHours}"
+                                required />
+                        </div>
+                        <div class="form-group">
+                            <label>Assign To</label>
+                            <select name="assignedToId">
+                                <option value="">-- Unassigned --</option>
+                                <option th:each="u : ${users}" th:value="${u.id}"
+                                    th:text="${u.firstName} + ' ' + ${u.lastName}"
+                                    th:selected="${task.assignedTo != null && u.id == task.assignedTo.id}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select name="priority">
+                                <option value="LOW" th:selected="${task.priority.name() == 'LOW'}">Low</option>
+                                <option value="MEDIUM" th:selected="${task.priority.name() == 'MEDIUM'}">Medium</option>
+                                <option value="HIGH" th:selected="${task.priority.name() == 'HIGH'}">High</option>
+                                <option value="CRITICAL" th:selected="${task.priority.name() == 'CRITICAL'}">Critical
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="TODO" th:selected="${task.status.name() == 'TODO'}">To Do</option>
+                                <option value="IN_PROGRESS" th:selected="${task.status.name() == 'IN_PROGRESS'}">In
+                                    Progress</option>
+                                <option value="REVIEW" th:selected="${task.status.name() == 'REVIEW'}">Review</option>
+                                <option value="DONE" th:selected="${task.status.name() == 'DONE'}">Done</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" th:text="${task.description}"></textarea>
+                    </div>
+
+                    <div class="flex" style="gap: 1rem;">
+                        <button type="submit" class="btn">Update Task</button>
+                        <a href="/tasks" class="btn btn-secondary"
+                            style="text-align:center; display:inline-block; text-decoration:none;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

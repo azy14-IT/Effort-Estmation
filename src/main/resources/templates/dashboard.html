@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Dashboard - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/tasks" class="nav-link">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span th:text="${user.firstName} + ' ' + ${user.lastName}">User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <!-- SUPER ADMIN DASHBOARD -->
+            <div th:if="${user.role.name == 'Super Admin'}">
+                <div class="page-header">
+                    <h2>Admin Analytics Dashboard</h2>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Hours Logged</h3>
+                        <p class="stat-value" th:text="${totalHours}">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Employees</h3>
+                        <p class="stat-value" th:text="${totalEmployees}">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Projects</h3>
+                        <p class="stat-value" th:text="${activeProjects}">0</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-container"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="card">
+                        <h3>Effort by Project</h3>
+                        <canvas id="projectChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">Employee Performance</h3>
+                            <a href="/employee-performance"
+                                style="color: #3b82f6; text-decoration: none; font-size: 0.875rem; font-weight: 500;">View
+                                Details &rarr;</a>
+                        </div>
+                        <canvas id="employeeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detailed Report Table -->
+                <div class="card">
+                    <h3>Detailed Activity Log</h3>
+                    <div class="table-container">
+                        <table id="activityTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Employee</th>
+                                    <th>Project</th>
+                                    <th>Task</th>
+                                    <th>Hours</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="log : ${allLogs}">
+                                    <td th:text="${log.logDate}">2023-01-01</td>
+                                    <td th:text="${log.userId}">User ID</td>
+                                    <!--Ideally map to name in controller for display-->
+                                    <td th:text="${log.task.project.name}">Project A</td>
+                                    <td th:text="${log.task.title}">Task 1</td>
+                                    <td th:text="${log.hoursLogged}">8.0</td>
+                                    <td th:text="${log.description}">Worked on X</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REGULAR DASHBOARD (For Everyone) -->
+            <div class="page-header">
+                <h2>My Workbench</h2>
+                <div class="date-display" th:text="${#temporals.format(#temporals.createNow(), 'EEEE, MMMM dd')}">Date
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Hours Logged Today</h3>
+                    <p class="stat-value" th:text="${todayHours}">0</p>
+                </div>
+                <!-- Add more user stats here -->
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Log Effort Form -->
+                <div class="card">
+                    <h3>Log Working Hours</h3>
+                    <form action="/log-effort" method="post">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" name="date" required
+                                th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" />
+                        </div>
+                        <div class="form-group">
+                            <label>Task</label>
+                            <select name="taskId" required>
+                                <option value="">Select Task</option>
+                                <option th:each="task : ${tasks}" th:value="${task.id}"
+                                    th:text="${task.title} + ' (' + ${task.project.name} + ')'"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Hours Spent</label>
+                            <input type="number" name="hours" step="0.5" min="0.5" max="24" required
+                                placeholder="e.g. 4.5" />
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" rows="3" placeholder="What did you work on?"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Submit Log</button>
+                    </form>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <h3>My Recent Logs</h3>
+                    <div class="activity-feed">
+                        <div class="activity-item" th:each="log : ${myLogs}">
+                            <div class="activity-header">
+                                <strong th:text="${log.task.title}">Task Name</strong>
+                                <span class="hours-badge" th:text="${log.hoursLogged} + ' hrs'">4h</span>
+                            </div>
+                            <p class="activity-desc" th:text="${log.description}">Description...</p>
+                            <small th:text="${log.logDate}">Date</small>
+                        </div>
+                        <div th:if="${#lists.isEmpty(myLogs)}" style="color: #64748b; font-style: italic;">
+                            No logs found. Start working!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Charts Script -->
+    <script th:if="${user.role.name == 'Super Admin'}" th:inline="javascript">
+        /*<![CDATA[*/
+        const projectData = /*[[${projectHours}]]*/ {};
+        const employeeData = /*[[${employeeHours}]]*/ {};
+
+        // Project Chart
+        new Chart(document.getElementById('projectChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(projectData),
+                datasets: [{
+                    data: Object.values(projectData),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                }]
+            }
+        });
+
+        // Employee Chart
+        new Chart(document.getElementById('employeeChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(employeeData),
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: Object.values(employeeData),
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        /*]]>*/
+    </script>
+</body>
+
+</html>

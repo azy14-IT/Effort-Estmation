@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Employee Performance - WorkTrack Pro</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <!-- Tom Select for Searchable Dropdown -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        .filter-section {
+            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .employee-section {
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Select Styling */
+        select {
+            appearance: none;
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 0.5rem 2rem 0.5rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #1e293b;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            outline: none;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            min-width: 250px;
+        }
+
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Tom Select Customization to match App Theme */
+        .ts-control {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem 0.75rem !important;
+            background-color: #f8fafc !important;
+            font-size: 1rem !important;
+            color: #1e293b !important;
+            box-shadow: none !important;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ts-control.focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+            background-color: #ffffff !important;
+        }
+
+        .ts-dropdown {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            margin-top: 4px !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .ts-dropdown .option {
+            padding: 0.75rem 1rem !important;
+            color: #1e293b !important;
+        }
+
+        .ts-dropdown .option.active {
+            background-color: #eff6ff !important;
+            /* light blue */
+            color: #1e40af !important;
+        }
+
+        /* Input within tom select */
+        .ts-control input {
+            font-size: 1rem !important;
+            color: #1e293b !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">WorkTrack Pro</div>
+            <nav>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/projects" class="nav-link">Projects</a>
+                <a href="/tasks" class="nav-link">Tasks</a>
+                <a href="/users" class="nav-link" th:if="${user.role.name == 'Super Admin'}">Users</a>
+            </nav>
+            <div class="user-profile">
+                <span th:text="${user.firstName} + ' ' + ${user.lastName}">User</span> • <a href="/logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Employee Performance Details</h2>
+                <div class="actions" style="display: flex; gap: 10px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-right: 15px;">
+                        <label for="employeeSelect"
+                            style="font-weight: 600; color: #475569; margin: 0; white-space: nowrap;">Filter:</label>
+                        <div style="width: 250px;">
+                            <select id="employeeSelect" autocomplete="off">
+                                <option value="all">Show All Employees</option>
+                                <option th:each="item : ${performanceList}" th:value="${item.user.id}"
+                                    th:text="${item.user.firstName} + ' ' + ${item.user.lastName}">
+                                </option>
+                            </select>
+                        </div>
+                        <button onclick="resetFilter()" class="btn-sm btn-secondary"
+                            style="height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; color: #64748b; background: white;"
+                            title="Reset Filter">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12" />
+                                <path d="M3 3v9h9" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button onclick="exportToExcel()" class="btn btn-green"
+                        style="background-color: #10b981; height: 42px; display: inline-flex; align-items: center;">Export
+                        Excel</button>
+                    <button onclick="exportToPDF()" class="btn btn-red"
+                        style="background-color: #ef4444; height: 42px; display: inline-flex; align-items: center;">Export
+                        PDF</button>
+                </div>
+            </div>
+
+            <div id="performanceContainer">
+                <div th:each="item : ${performanceList}" th:id="'emp-' + ${item.user.id}" class="employee-section card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div
+                                style="width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                <span th:text="${#strings.substring(item.user.firstName,0,1)}">A</span>
+                            </div>
+                            <div>
+                                <h3 th:text="${item.user.firstName} + ' ' + ${item.user.lastName}"
+                                    style="margin: 0; color: #1e293b;">Name</h3>
+                                <small th:text="${item.user.role.name}" style="color: #64748b;">Role</small>
+                                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;"
+                                    th:if="${item.hourlyRate > 0}">
+                                    Rate: ₹<span th:text="${item.hourlyRate}">0</span>/hr
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div>
+                                <span style="font-size: 0.875rem; color: #64748b; display: block;">Total
+                                    Hours</span>
+                                <strong style="font-size: 1.25rem; color: #3b82f6;"
+                                    th:text="${item.totalHours}">0</strong>
+                            </div>
+                            <div style="margin-top: 8px;" th:if="${item.totalSpent > 0}">
+                                <span style="font-size: 0.875rem; color: #64748b; display: block;">Total
+                                    Spent</span>
+                                <strong style="font-size: 1.25rem; color: #10b981;" class="total-spent-value"
+                                    th:data-value="${item.totalSpent}"
+                                    th:text="'₹' + ${#numbers.formatDecimal(item.totalSpent, 0, 'COMMA', 2, 'POINT')}">₹0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container" th:if="${not #lists.isEmpty(item.logs)}">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Project</th>
+                                    <th>Task</th>
+                                    <th>Hours</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="log : ${item.logs}">
+                                    <td th:text="${log.logDate}">Date</td>
+                                    <td th:text="${log.task.project.name}">Project</td>
+                                    <td th:text="${log.task.title}">Task</td>
+                                    <td th:text="${log.hoursLogged}">Hours</td>
+                                    <td th:text="${log.description}">Desc</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div th:if="${#lists.isEmpty(item.logs)}"
+                        style="text-align: center; color: #94a3b8; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                        No activity logs found for this employee.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function filterEmployees() {
+            const selectedId = document.getElementById('employeeSelect').value;
+            const sections = document.querySelectorAll('.employee-section');
+
+            sections.forEach(section => {
+                if (selectedId === 'all') {
+                    section.classList.remove('hidden');
+                } else {
+                    if (section.id === 'emp-' + selectedId) {
+                        section.classList.remove('hidden');
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        // Helper function to gather currently visible data
+        function getVisibleData() {
+            const sections = document.querySelectorAll('.employee-section');
+            let allRows = [];
+
+            sections.forEach(section => {
+                // If section is NOT hidden, include its data
+                if (!section.classList.contains('hidden')) {
+                    // Get Employee Name from the header h3
+                    const empName = section.querySelector('h3').innerText;
+
+                    // Get rows from the table inside this section
+                    const table = section.querySelector('table');
+                    if (table) {
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length > 0) {
+                                allRows.push({
+                                    Date: cells[0].innerText,
+                                    Employee: empName,
+                                    Project: cells[1].innerText,
+                                    Task: cells[2].innerText,
+                                    Hours: cells[3].innerText,
+                                    Description: cells[4].innerText
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+            return allRows;
+        }
+
+        function exportToExcel() {
+            const data = getVisibleData();
+            if (data.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+
+            // Calculate Total Hours & Cost
+            let totalHours = 0;
+            let totalCost = 0;
+
+            // Sum up the 'data-value' from visible employee sections for total cost
+            const visibleSections = document.querySelectorAll('.employee-section:not(.hidden)');
+            visibleSections.forEach(sec => {
+                const spentEl = sec.querySelector('.total-spent-value');
+                if (spentEl) {
+                    totalCost += parseFloat(spentEl.getAttribute('data-value')) || 0;
+                }
+            });
+            totalHours = data.reduce((sum, item) => sum + (parseFloat(item.Hours) || 0), 0);
+
+            // Create Array of Arrays for custom layout
+            // Add Total Cost to header
+            const header = ["Employee Activity Report", "", "", "", "Total Hours:", totalHours.toFixed(2), "Total Spent:", "Rs. " + totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })];
+            const emptyRow = [];
+            const tableHeaders = ["Date", "Employee", "Project", "Task", "Hours", "Description"];
+
+            const tableData = data.map(item => [
+                item.Date,
+                item.Employee,
+                item.Project,
+                item.Task,
+                parseFloat(item.Hours), // consistent number format
+                item.Description
+            ]);
+
+            const finalData = [header, emptyRow, tableHeaders, ...tableData];
+
+            const ws = XLSX.utils.aoa_to_sheet(finalData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Activity Report");
+            XLSX.writeFile(wb, 'Employee_Activity_Report.xlsx');
+        }
+
+        function exportToPDF() {
+            const data = getVisibleData();
+            if (data.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Calculate Total Hours
+            const totalHours = data.reduce((sum, item) => sum + (parseFloat(item.Hours) || 0), 0);
+
+            // Calculate Total Cost
+            let totalCost = 0;
+            const visibleSections = document.querySelectorAll('.employee-section:not(.hidden)');
+            visibleSections.forEach(sec => {
+                const spentEl = sec.querySelector('.total-spent-value');
+                if (spentEl) {
+                    totalCost += parseFloat(spentEl.getAttribute('data-value')) || 0;
+                }
+            });
+
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.text("Employee Activity Report", 14, 15);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(50, 50, 50); // Dark Gray
+
+            // Right aligned stats
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 14;
+
+            doc.text(`Total Hours: ${totalHours.toFixed(2)}`, pageWidth - margin, 15, { align: 'right' });
+            doc.text(`Total Spent: Rs. ${totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageWidth - margin, 22, { align: 'right' });
+
+            doc.setTextColor(0, 0, 0); // Reset to black
+            doc.setFont("helvetica", "normal");
+
+            // Define columns
+            const tableColumn = ["Date", "Employee", "Project", "Task", "Hours", "Description"];
+            // Map data to array of arrays
+            const tableRows = data.map(item => [
+                item.Date,
+                item.Employee,
+                item.Project,
+                item.Task,
+                item.Hours,
+                item.Description
+            ]);
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+            });
+
+            doc.save('Employee_Activity_Report.pdf');
+        }
+
+        // Initialize Tom Select
+        document.addEventListener('DOMContentLoaded', function () {
+            new TomSelect("#employeeSelect", {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                onChange: function (value) {
+                    filterEmployees();
+                }
+            });
+        });
+
+        function resetFilter() {
+            const select = document.getElementById('employeeSelect');
+            if (select && select.tomselect) {
+                select.tomselect.setValue('all');
+            }
+        }
+    </script>
+</body>
+
+</html>
