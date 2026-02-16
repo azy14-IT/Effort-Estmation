@@ -58,7 +58,7 @@ public class DashboardController {
         model.addAttribute("tasks", taskRepository.findAll());
 
         // SUPER ADMIN SPECIFIC DATA
-        if ("Super Admin".equals(user.getRole().getName())) {
+        if (user.getRole() != null && "Super Admin".equals(user.getRole().getName())) {
             List<EffortLog> allLogs = effortLogRepository.findAll();
 
             // 1. Total Hours Logged (All Time)
