@@ -47,7 +47,13 @@ public class DataSeeder implements CommandLineRunner {
                 Role adminRole = roleRepository.findAll().stream().filter(r -> r.getName().equals("Super Admin"))
                                 .findFirst().orElse(null);
                 if (adminRole != null) {
-                        createUser("Super", "Admin", "admin@company.com", "password", adminRole, engineering);
+                        User existingAdmin = userRepository.findByEmail("admin@company.com");
+                        if (existingAdmin != null) {
+                                existingAdmin.setPassword("password");
+                                userRepository.save(existingAdmin);
+                        } else {
+                                createUser("Super", "Admin", "admin@company.com", "password", adminRole, engineering);
+                        }
                 }
 
                 // 3. Create Users
