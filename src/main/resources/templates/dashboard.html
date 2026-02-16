@@ -17,7 +17,8 @@
                 <a href="/dashboard" class="nav-link active">Dashboard</a>
                 <a href="/projects" class="nav-link">Projects</a>
                 <a href="/tasks" class="nav-link">Tasks</a>
-                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+                <a href="/users" class="nav-link"
+                    th:if="${session.user.role != null and session.user.role.name == 'Super Admin'}">Users</a>
             </nav>
             <div class="user-profile">
                 <span th:text="${user.firstName} + ' ' + ${user.lastName}">User</span> • <a href="/logout">Logout</a>
@@ -27,10 +28,13 @@
         <main class="main-content">
 
             <!-- SUPER ADMIN DASHBOARD -->
-            <div th:if="${user.role.name == 'Super Admin'}">
+            <div th:if="${user.role != null and user.role.name == 'Super Admin'}">
                 <div class="page-header">
-                    <h2>Admin Analytics Dashboard</h2>
-                </div>
+
+                    <!-- Admin Charts Script -->
+                    <script th:if="${user.role != null and user.role.name == 'Super Admin'}" th:inline="javascript">
+                        <h2>Admin Analytics Dashboard</h2>
+                </div >
 
                 <!-- Summary Cards -->
                 <div class="stats-grid">
@@ -48,7 +52,7 @@
                     </div>
                 </div>
 
-                <!-- Charts Row -->
+                <!--Charts Row-- >
                 <div class="charts-container"
                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
                     <div class="card">
@@ -67,45 +71,45 @@
                     </div>
                 </div>
 
-                <!-- Detailed Report Table -->
-                <div class="card">
-                    <h3>Detailed Activity Log</h3>
-                    <div class="table-container">
-                        <table id="activityTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Employee</th>
-                                    <th>Project</th>
-                                    <th>Task</th>
-                                    <th>Hours</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="log : ${allLogs}">
-                                    <td th:text="${log.logDate}">2023-01-01</td>
-                                    <td th:text="${log.userId}">User ID</td>
-                                    <!--Ideally map to name in controller for display-->
-                                    <td th:text="${log.task.project.name}">Project A</td>
-                                    <td th:text="${log.task.title}">Task 1</td>
-                                    <td th:text="${log.hoursLogged}">8.0</td>
-                                    <td th:text="${log.description}">Worked on X</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                <!--Detailed Report Table-- >
+                            <div class="card">
+                                <h3>Detailed Activity Log</h3>
+                                <div class="table-container">
+                                    <table id="activityTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Employee</th>
+                                                <th>Project</th>
+                                                <th>Task</th>
+                                                <th>Hours</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="log : ${allLogs}">
+                                                <td th:text="${log.logDate}">2023-01-01</td>
+                                                <td th:text="${log.userId}">User ID</td>
+                                                <!--Ideally map to name in controller for display-->
+                                                <td th:text="${log.task.project.name}">Project A</td>
+                                                <td th:text="${log.task.title}">Task 1</td>
+                                                <td th:text="${log.hoursLogged}">8.0</td>
+                                                <td th:text="${log.description}">Worked on X</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+            </div >
 
-            <!-- REGULAR DASHBOARD (For Everyone) -->
+            < !--REGULAR DASHBOARD(For Everyone)-- >
             <div class="page-header">
                 <h2>My Workbench</h2>
                 <div class="date-display" th:text="${#temporals.format(#temporals.createNow(), 'EEEE, MMMM dd')}">Date
                 </div>
             </div>
 
-            <!-- Stats Row -->
+            <!--Stats Row-- >
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Hours Logged Today</h3>
@@ -163,45 +167,45 @@
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </main >
+    </div >
 
-    <!-- Admin Charts Script -->
-    <script th:if="${user.role.name == 'Super Admin'}" th:inline="javascript">
+    < !--Admin Charts Script-- >
+                            <script th:if="${user.role.name == 'Super Admin'}" th:inline="javascript">
         /*<![CDATA[*/
-        const projectData = /*[[${projectHours}]]*/ {};
-        const employeeData = /*[[${employeeHours}]]*/ {};
+                                const projectData = /*[[${projectHours}]]*/ { };
+                                const employeeData = /*[[${employeeHours}]]*/ { };
 
-        // Project Chart
-        new Chart(document.getElementById('projectChart'), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(projectData),
-                datasets: [{
-                    data: Object.values(projectData),
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                                // Project Chart
+                                new Chart(document.getElementById('projectChart'), {
+                                    type: 'doughnut',
+                                data: {
+                                    labels: Object.keys(projectData),
+                                datasets: [{
+                                    data: Object.values(projectData),
+                                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
                 }]
             }
         });
 
-        // Employee Chart
-        new Chart(document.getElementById('employeeChart'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(employeeData),
-                datasets: [{
-                    label: 'Hours Worked',
-                    data: Object.values(employeeData),
-                    backgroundColor: '#3b82f6'
+                                // Employee Chart
+                                new Chart(document.getElementById('employeeChart'), {
+                                    type: 'bar',
+                                data: {
+                                    labels: Object.keys(employeeData),
+                                datasets: [{
+                                    label: 'Hours Worked',
+                                data: Object.values(employeeData),
+                                backgroundColor: '#3b82f6'
                 }]
             },
-            options: {
-                scales: { y: { beginAtZero: true } }
+                                options: {
+                                    scales: {y: {beginAtZero: true } }
             }
         });
 
-        /*]]>*/
-    </script>
+                        /*]]>*/
+                    </script>
 </body>
 
 </html>
