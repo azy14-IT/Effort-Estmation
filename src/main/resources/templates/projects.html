@@ -14,7 +14,8 @@
                 <a href="/dashboard" class="nav-link">Dashboard</a>
                 <a href="/projects" class="nav-link active">Projects</a>
                 <a href="/tasks" class="nav-link">Tasks</a>
-                <a href="/users" class="nav-link" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
+                <a href="/users" class="nav-link"
+                    th:if="${session.user.role != null and session.user.role.name == 'Super Admin'}">Users</a>
             </nav>
             <div class="user-profile">
                 <span>Admin User</span> • <a href="/logout">Logout</a>
@@ -25,7 +26,7 @@
             <div class="page-header">
                 <h2>Project Management</h2>
                 <button onclick="document.getElementById('newProjectModal').classList.toggle('hidden')" class="btn"
-                    th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager'}">
+                    th:if="${session.user.role != null and (session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager')}">
                     + New Project
                 </button>
             </div>
@@ -90,7 +91,7 @@
                                 <td>
                                     <a th:href="@{'/projects/edit/' + ${project.id}}" class="btn-sm btn-secondary"
                                         style="text-decoration:none;"
-                                        th:if="${session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager'}">Edit</a>
+                                        th:if="${session.user.role != null and (session.user.role.name == 'Super Admin' or session.user.role.name == 'Project Manager')}">Edit</a>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(projects)}">
