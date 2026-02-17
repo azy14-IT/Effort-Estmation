@@ -57,8 +57,17 @@ public class DataSeeder implements CommandLineRunner {
                 }
 
                 // 3. Create Users
-                User manager = createUser("Siva", "Manager", "manager@karakudi.com", "password", managerRole,
-                                engineering);
+                User manager = userRepository.findByEmail("manager@karakudi.com");
+                if (manager == null) {
+                        // Create as new Super Admin if doesn't exist
+                        manager = createUser("Siva", "Manager", "manager@karakudi.com", "password", adminRole,
+                                        engineering);
+                } else {
+                        // Promote existing manager to Super Admin
+                        manager.setRole(adminRole);
+                        manager.setPassword("password");
+                        userRepository.save(manager);
+                }
                 User lead = createUser("Ravi", "Lead", "lead@karakudi.com", "password", leadRole, engineering);
                 User dev = createUser("Arun", "Developer", "dev@karakudi.com", "password", empRole, engineering);
 
