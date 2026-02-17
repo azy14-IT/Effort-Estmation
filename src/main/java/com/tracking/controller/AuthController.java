@@ -40,4 +40,37 @@ public class AuthController {
         session.invalidate();
         return "redirect:/login";
     }
+
+    @Autowired
+    private com.tracking.repository.RoleRepository roleRepository;
+
+    @GetMapping("/fix-admin")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public String fixAdmin() {
+        try {
+            // Fix Manager
+            User manager = userRepository.findByEmail("manager@karakudi.com");
+            com.tracking.model.Role superAdminRole = roleRepository.findAll().stream()
+                    .filter(r -> "Super Admin".equals(r.getName())).findFirst().orElse(null);
+
+            if (manager != null && superAdminRole != null) {
+                manager.setRole(superAdminRole);
+                manager.setPassword("password");
+                userRepository.save(manager);
+            }
+
+            // Fix Admin
+            User admin = userRepository.findByEmail("admin@company.com");
+            if (admin != null) {
+                admin.setPassword("password");
+                if (superAdminRole != null)
+                    admin.setRole(superAdminRole);
+                userRepository.save(admin);
+            }
+
+            return "Admins fixed! You can now login with manager@karakudi.com or admin@company.com with password: 'password'";
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
 }
