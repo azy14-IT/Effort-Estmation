@@ -21,7 +21,12 @@
                 <a href="/users" class="nav-link active" th:if="${session.user.role.name == 'Super Admin'}">Users</a>
             </nav>
             <div class="user-profile">
-                <span>Admin User</span> • <a href="/logout">Logout</a>
+                <div style="margin-bottom: 5px;">
+                    <span th:text="${session.user.firstName} + ' ' + ${session.user.lastName}">Admin User</span> • <a
+                        href="/logout">Logout</a>
+                </div>
+                <a href="/change-password" style="font-size: 0.85rem; color: #cbd5e1; text-decoration: none;">Change
+                    Password</a>
             </div>
         </aside>
 
@@ -65,7 +70,18 @@
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" name="password" required />
+                        <div style="position: relative;">
+                            <input type="password" id="newUserPassword" name="password" required
+                                style="width: 100%; padding-right: 40px;" />
+                            <span class="password-toggle" onclick="togglePassword('newUserPassword')"
+                                style="cursor: pointer; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
                     </div>
                     <div class="grid-cols-2">
                         <div class="form-group">
@@ -119,6 +135,10 @@
                                 </td>
                                 <td>
                                     <a th:href="@{'/users/edit/' + ${u.id}}" class="btn-sm btn-secondary">Edit</a>
+                                    <button type="button" class="btn-sm"
+                                        th:onclick="'openResetPasswordModal(' + ${u.id} + ')'"
+                                        style="background-color: #f59e0b; border: none; color: white; cursor: pointer;">Reset
+                                        Pwd</button>
                                 </td>
                             </tr>
                         </tbody>
@@ -128,7 +148,67 @@
         </main>
     </div>
 
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="card hidden"
+        style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; min-width:350px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h3 style="margin-top:0;">Reset User Password</h3>
+        <form action="/users/reset-password" method="post">
+            <input type="hidden" name="id" id="resetUserId" value="" />
+            <div class="form-group">
+                <label>New Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="resetPasswordInput" name="newPassword" required
+                        style="width: 100%; padding-right: 40px;" />
+                    <span class="password-toggle" onclick="togglePassword('resetPasswordInput')"
+                        style="cursor: pointer; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #64748b;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn-sm btn-secondary" onclick="closeResetPasswordModal()"
+                    style="padding: 0.5rem 1rem;">Cancel</button>
+                <button type="submit" class="btn-sm"
+                    style="padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 4px;">Save
+                    Password</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal Backdrop Overlay -->
+    <div id="modalOverlay" class="hidden"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;"
+        onclick="closeResetPasswordModal()"></div>
+
     <script>
+        function openResetPasswordModal(id) {
+            document.getElementById('resetUserId').value = id;
+            document.getElementById('resetPasswordModal').classList.remove('hidden');
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeResetPasswordModal() {
+            document.getElementById('resetPasswordModal').classList.add('hidden');
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('resetPasswordInput').value = '';
+            document.getElementById('resetUserId').value = '';
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling.querySelector('svg');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                input.type = "password";
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
         function getUsersData() {
             const table = document.querySelector('table');
             const rows = table.querySelectorAll('tbody tr');

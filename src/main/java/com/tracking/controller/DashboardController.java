@@ -57,6 +57,17 @@ public class DashboardController {
         model.addAttribute("projects", projectRepository.findAll());
         model.addAttribute("tasks", taskRepository.findAll());
 
+        // Add user total hours and total cost
+        BigDecimal myTotalHours = myLogs.stream()
+                .map(EffortLog::getHoursLogged)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal hourlyRate = user.getHourlyRate() != null ? user.getHourlyRate() : BigDecimal.ZERO;
+        BigDecimal myTotalEarnings = myTotalHours.multiply(hourlyRate);
+
+        model.addAttribute("myTotalHours", myTotalHours);
+        model.addAttribute("myTotalEarnings", myTotalEarnings);
+
         // SUPER ADMIN SPECIFIC DATA
         if (user.getRole() != null && "Super Admin".equals(user.getRole().getName())) {
             List<EffortLog> allLogs = effortLogRepository.findAll();

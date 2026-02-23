@@ -125,4 +125,45 @@ public class UserController {
         userRepository.save(newUser);
         return "redirect:/users";
     }
+
+    @PostMapping("/users/reset-password")
+    public String resetPassword(@RequestParam Long id, @RequestParam String newPassword, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || !"Super Admin".equals(user.getRole().getName())) {
+            return "redirect:/login";
+        }
+        User targetUser = userRepository.findById(id).orElseThrow();
+        targetUser.setPassword(newPassword);
+        userRepository.save(targetUser);
+        return "redirect:/users";
+    }
+
+    @GetMapping("/change-password")
+    public String showChangePasswordForm(HttpSession session, Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null)
+            return "redirect:/login";
+        model.addAttribute("user", user);
+        return "change-password";
+    }
+
+    @PostMapping("/change-password")
+    public String processChangePassword(@RequestParam String oldPassword, @RequestParam String newPassword,
+            HttpSession session, Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null)
+            return "redirect:/login";
+
+        User dbUser = userRepository.findById(user.getId()).orElseThrow();
+        if (!dbUser.getPassword().equals(oldPassword)) {
+            model.addAttribute("error", "Incorrect current password!");
+            model.addAttribute("user", dbUser);
+            return "change-password";
+        }
+        dbUser.setPassword(newPassword);
+        userRepository.save(dbUser);
+        model.addAttribute("success", "Password updated successfully!");
+        model.addAttribute("user", dbUser);
+        return "change-password";
+    }
 }
